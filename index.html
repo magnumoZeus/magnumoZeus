@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GitHub API Playground — Free & Client‑Side</title>
+  <link rel="preconnect" href="https://avatars.githubusercontent.com">
+  <style>
+    :root{
+      --bg: #0b0f14;
+      --panel: #10161d;
+      --muted: #8b9eb1;
+      --text: #e6edf3;
+      --accent: #2f81f7;
+      --accent-2: #7ee787;
+      --danger: #ff7b72;
+      --ring: #2f81f7aa;
+      --card: #0e141b;
+      --border: #1f2a37;
+      --chip: #111827;
+    }
+    * { box-sizing: border-box }
+    html, body { height:100% }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: radial-gradient(1200px 600px at 20% -10%, #132235 0, transparent 70%),
+                  radial-gradient(1000px 600px at 120% 10%, #152539 0, transparent 70%),
+                  var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    a { color: var(--accent); text-decoration: none }
+    a:hover { text-decoration: underline }
+    header{
+      position: sticky; top: 0; z-index: 50;
+      backdrop-filter: blur(8px);
+      background: color-mix(in oklab, var(--bg) 80%, transparent);
+      border-bottom: 1px solid var(--border);
+    }
+    .wrap{ max-width: 1200px; margin: 0 auto; padding: 16px }
+    .title{
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+    .title h1 { font-size: clamp(18px, 2.6vw, 28px); margin: 0 }
+    .badge{ padding: 4px 8px; background: #0b1220; border:1px solid var(--border); border-radius: 100px; color: var(--muted); font-size: 12px }
+    .toolbar{ display: grid; grid-template-columns: 1.3fr 1fr 1fr auto; gap: 10px; margin-top: 10px }
+    .toolbar input, .toolbar button, select {
+      width: 100%; padding: 10px 12px; border-radius: 12px; border:1px solid var(--border);
+      background: var(--panel); color: var(--text); outline: none;
+    }
+    .toolbar button{
+      border: 1px solid color-mix(in oklab, var(--accent) 50%, var(--border));
+      cursor: pointer; font-weight: 600;
+      box-shadow: 0 0 0 0 transparent;
+      transition: box-shadow .2s ease, transform .02s ease;
+    }
+    .toolbar button:active{ transform: translateY(1px) }
+    .toolbar .sub{ background: #0f1520; border-color: var(--border) }
+    .grid{
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 16px; padding: 16px;
+    }
+    .card{
+      background: linear-gradient(180deg, color-mix(in oklab, var(--panel) 70%, transparent), var(--card));
+      border:1px solid var(--border);
+      border-radius: 16px; padding: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    .profile{
+      display: grid; gap: 12px; place-items: start;
+    }
+    .avatar{
+      border-radius: 16px; width: 100%; aspect-ratio: 1/1; object-fit: cover; border:1px solid var(--border);
+    }
+    .stats{ display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; width: 100% }
+    .stat{ background: var(--chip); border:1px solid var(--border); border-radius: 12px; padding: 10px; text-align: center }
+    .stat .k{ font-size: 18px; font-weight: 800 }
+    .muted{ color: var(--muted) }
+    .chips { display:flex; gap:8px; flex-wrap: wrap }
+    .chip{ background: var(--chip); border:1px solid var(--border); padding:6px 10px; border-radius: 999px; font-size: 12px; color: var(--muted)}
+    .tabs{ display:flex; gap:8px; flex-wrap: wrap; margin-bottom: 8px }
+    .tab{ padding: 8px 12px; border-radius: 12px; border:1px solid var(--border); background: var(--panel); cursor:pointer; font-weight:600 }
+    .tab.active{ outline: 2px solid var(--ring) }
+    .list{ display:grid; gap:12px }
+    .repo, .gist, .event, .issue, .commit{
+      border:1px solid var(--border); border-radius: 12px; padding: 12px; background: #0d131b;
+    }
+    .repo h3, .gist h3, .event h3, .issue h3, .commit h3 { margin: 0 0 6px }
+    .flex{ display:flex; gap:12px; align-items:center; flex-wrap: wrap }
+    .right{ display:grid; gap:16px }
+    .section-title{ display:flex; align-items:center; justify-content: space-between }
+    .pill{ padding:4px 10px; border-radius:999px; border:1px solid var(--border); background:#0f1520; color:var(--muted); font-size:12px }
+    .footer{ padding: 24px; text-align: center; color: var(--muted) }
+    .skeleton{
+      position: relative; overflow: hidden; background: #0d141d; border:1px solid var(--border); border-radius: 12px; height: 48px;
+    }
+    .skeleton::after{
+      content:""; position:absolute; inset:0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.05), transparent);
+      animation: shimmer 1.2s infinite;
+    }
+    @keyframes shimmer{ 0%{ transform: translateX(-100%) } 100%{ transform: translateX(100%) } }
+    .error{ color: var(--danger) }
+    .success{ color: var(--accent-2) }
+    .hidden{ display:none !important }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace }
+    .kbd{ font-size:12px; padding:2px 6px; border-radius:6px; background:#0f1725; border:1px solid var(--border) }
+    .small{ font-size: 12px }
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="title">
+      <h1>⚡ GitHub API Playground</h1>
+      <span id="rl" class="badge">Rate Limit: …</span>
+      <span class="badge">No token needed • Free APIs</span>
+    </div>
+    <div class="toolbar">
+      <input id="username" placeholder="Enter a GitHub username (e.g., torvalds, gaearon, vercel)" />
+      <button id="loadProfile">Load Profile</button>
+      <input id="repoFull" placeholder="owner/repo (optional—for issues & commits)" />
+      <button class="sub" id="loadRepo">Load Repo</button>
+    </div>
+    <div class="small muted" style="margin-top:6px">
+      Tip: Press <span class="kbd">Enter</span> in either field to load. Uses public endpoints:
+      <span class="mono">/users</span>, <span class="mono">/users/*/repos</span>, <span class="mono">/users/*/gists</span>, <span class="mono">/users/*/events/public</span>, <span class="mono">/search/repositories</span>, <span class="mono">/repos/*/issues</span>, <span class="mono">/repos/*/commits</span>, <span class="mono">/rate_limit</span>.
+    </div>
+  </div>
+</header>
+
+<main class="wrap grid">
+  <aside class="card profile">
+    <img id="avatar" class="avatar" alt="" src="">
+    <div>
+      <div class="flex" style="justify-content: space-between; width: 100%">
+        <div>
+          <h2 id="name" style="margin:0 0 4px">—</h2>
+          <div id="login" class="muted">—</div>
+        </div>
+        <a id="profileLink" class="pill" target="_blank" rel="noreferrer">Open on GitHub ↗</a>
+      </div>
+      <p id="bio" class="muted" style="margin: 8px 0 12px"></p>
+      <div class="stats">
+        <div class="stat"><div class="k" id="followers">—</div><div class="muted small">Followers</div></div>
+        <div class="stat"><div class="k" id="following">—</div><div class="muted small">Following</div></div>
+        <div class="stat"><div class="k" id="public_repos">—</div><div class="muted small">Public Repos</div></div>
+      </div>
+    </div>
+    <div class="chips" id="extras"></div>
+  </aside>
+
+  <section class="right">
+    <div class="card">
+      <div class="tabs">
+        <button class="tab active" data-tab="repos">Repositories</button>
+        <button class="tab" data-tab="gists">Gists</button>
+        <button class="tab" data-tab="events">Public Events</button>
+        <button class="tab" data-tab="search">Search Repositories</button>
+        <button class="tab" data-tab="issues">Repo Issues</button>
+        <button class="tab" data-tab="commits">Repo Commits</button>
+      </div>
+
+      <div id="repos" class="list"></div>
+      <div id="gists" class="list hidden"></div>
+      <div id="events" class="list hidden"></div>
+
+      <div id="search" class="hidden">
+        <div class="flex" style="margin-bottom:10px">
+          <input id="q" placeholder="Search repositories (e.g., topic:flutter stars:>500 language:Dart)" style="flex:1" />
+          <button id="doSearch">Search</button>
+        </div>
+        <div id="searchResults" class="list"></div>
+      </div>
+
+      <div id="issues" class="list hidden"></div>
+      <div id="commits" class="list hidden"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">
+        <h3 style="margin:0">API Console</h3>
+        <span class="pill">Try any GET endpoint</span>
+      </div>
+      <div class="flex" style="margin-top:8px">
+        <input id="endpoint" placeholder="https://api.github.com/users/octocat" style="flex:1">
+        <button id="send">Send</button>
+      </div>
+      <pre id="console" class="mono" style="white-space:pre-wrap; overflow:auto; max-height: 300px; margin-top: 10px; background:#0b1220; border:1px solid var(--border); border-radius:12px; padding:12px">{
+  "hint": "Enter any public GitHub API endpoint above to see the raw JSON here."
+}</pre>
+    </div>
+  </section>
+</main>
+
+<div class="footer small">
+  Built with pure HTML/CSS/JS using free, unauthenticated <a href="https://api.github.com" target="_blank" rel="noreferrer">GitHub REST APIs</a>.
+  • Dark UI inspired by GitHub’s Primer.
+</div>
+
+<script>
+  const $ = (sel) => document.querySelector(sel);
+  const list = (sel) => document.querySelector(sel);
+
+  // Tabs
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      const id = t.dataset.tab;
+      document.querySelectorAll('.list, #search').forEach(x => x.classList.add('hidden'));
+      document.getElementById(id).classList.remove('hidden');
+    });
+  });
+
+  const state = {
+    username: '',
+    repoFull: '',
+  };
+
+  // Convenience: K formatter
+  const k = (n) => Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 }).format(n);
+
+  // Basic fetch wrapper with error surfacing
+  async function get(url){
+    const r = await fetch(url, { headers: { 'Accept': 'application/vnd.github+json' } });
+    const remaining = r.headers.get('x-ratelimit-remaining');
+    const limit = r.headers.get('x-ratelimit-limit');
+    const reset = r.headers.get('x-ratelimit-reset');
+    if(limit && remaining){
+      const resetDate = reset ? new Date(Number(reset) * 1000) : null;
+      $('#rl').textContent = `Rate Limit: ${remaining}/${limit}` + (resetDate ? ` • resets ${resetDate.toLocaleTimeString()}` : '');
+    }
+    if(!r.ok){
+      const text = await r.text();
+      throw new Error(`HTTP ${r.status} — ${text}`);
+    }
+    return r.json();
+  }
+
+  function skeleton(container, rows=5){
+    container.innerHTML = Array.from({length: rows}).map(() => `<div class="skeleton"></div>`).join('');
+  }
+
+  function asTime(iso){
+    try { return new Date(iso).toLocaleString() } catch { return iso }
+  }
+
+  // Profile loader
+  async function loadProfile(username){
+    if(!username) return;
+    state.username = username;
+    localStorage.setItem('gh:username', username);
+    // Profile
+    try{
+      const u = await get(`https://api.github.com/users/${encodeURIComponent(username)}`);
+      $('#avatar').src = u.avatar_url;
+      $('#name').textContent = u.name ?? '—';
+      $('#login').textContent = '@' + (u.login ?? username);
+      $('#bio').textContent = u.bio ?? '';
+      $('#followers').textContent = k(u.followers);
+      $('#following').textContent = k(u.following);
+      $('#public_repos').textContent = k(u.public_repos);
+      $('#profileLink').href = u.html_url;
+      $('#extras').innerHTML = `
+        ${u.company ? `<span class="chip">${u.company}</span>`:''}
+        ${u.location ? `<span class="chip">📍 ${u.location}</span>`:''}
+        ${u.blog ? `<a class="chip" href="${u.blog}" target="_blank" rel="noreferrer">🔗 Website</a>`:''}
+        ${u.twitter_username ? `<a class="chip" href="https://twitter.com/${u.twitter_username}" target="_blank" rel="noreferrer">𝕏 @${u.twitter_username}</a>`:''}
+        <span class="chip">ID ${u.id}</span>
+        <span class="chip">Type ${u.type}</span>
+        <span class="chip">Created ${new Date(u.created_at).toLocaleDateString()}</span>
+      `;
+    }catch(e){
+      alert('Failed to load profile: ' + e.message);
+      return;
+    }
+
+    // Repos
+    const reposEl = $('#repos'); skeleton(reposEl);
+    try{
+      const repos = await get(`https://api.github.com/users/${encodeURIComponent(username)}/repos?sort=updated&per_page=20`);
+      reposEl.innerHTML = repos.map(r => `
+        <div class="repo">
+          <div class="flex" style="justify-content: space-between">
+            <h3><a href="${r.html_url}" target="_blank" rel="noreferrer">${r.full_name}</a></h3>
+            <span class="pill">${r.visibility}${r.archived ? ' • archived':''}</span>
+          </div>
+          <div class="muted">${r.description ?? ''}</div>
+          <div class="flex" style="margin-top:6px">
+            ${r.language ? `<span class="chip">${r.language}</span>`:''}
+            <span class="chip">★ ${k(r.stargazers_count)}</span>
+            <span class="chip">⑂ ${k(r.forks_count)}</span>
+            <span class="chip">Issues ${k(r.open_issues_count)}</span>
+            <span class="chip">Updated ${asTime(r.updated_at)}</span>
+          </div>
+        </div>
+      `).join('');
+    }catch(e){
+      reposEl.innerHTML = `<div class="error">Could not load repositories: ${e.message}</div>`;
+    }
+
+    // Gists
+    const gistsEl = $('#gists'); skeleton(gistsEl, 3);
+    try{
+      const gists = await get(`https://api.github.com/users/${encodeURIComponent(username)}/gists?per_page=20`);
+      gistsEl.innerHTML = gists.map(g => `
+        <div class="gist">
+          <h3><a href="${g.html_url}" target="_blank" rel="noreferrer">${g.description || 'Untitled gist'}</a></h3>
+          <div class="muted small">Files: ${Object.keys(g.files).length} • ${g.public ? 'Public' : 'Secret'} • Updated ${asTime(g.updated_at)}</div>
+        </div>
+      `).join('');
+    }catch(e){
+      gistsEl.innerHTML = `<div class="error">Could not load gists: ${e.message}</div>`;
+    }
+
+    // Events
+    const eventsEl = $('#events'); skeleton(eventsEl, 5);
+    try{
+      const events = await get(`https://api.github.com/users/${encodeURIComponent(username)}/events/public?per_page=20`);
+      eventsEl.innerHTML = events.map(ev => `
+        <div class="event">
+          <div class="flex" style="justify-content: space-between">
+            <h3>${ev.type}</h3>
+            <span class="pill">${asTime(ev.created_at)}</span>
+          </div>
+          <div class="muted small">Repo: <a href="https://github.com/${ev.repo.name}" target="_blank" rel="noreferrer">${ev.repo.name}</a></div>
+          <pre class="mono small" style="white-space:pre-wrap; overflow:auto; max-height: 160px; margin-top: 8px">${JSON.stringify(ev.payload, null, 2)}</pre>
+        </div>
+      `).join('');
+    }catch(e){
+      eventsEl.innerHTML = `<div class="error">Could not load events: ${e.message}</div>`;
+    }
+  }
+
+  async function loadRepo(full){
+    if(!full || !full.includes('/')){
+      alert('Enter repo as "owner/repo"'); return;
+    }
+    state.repoFull = full;
+    localStorage.setItem('gh:repo', full);
+    const issuesEl = $('#issues'); const commitsEl = $('#commits');
+    skeleton(issuesEl, 3); skeleton(commitsEl, 3);
+    // Issues
+    try{
+      const issues = await get(`https://api.github.com/repos/${full}/issues?state=open&per_page=20`);
+      issuesEl.innerHTML = issues.filter(x => !x.pull_request).map(is => `
+        <div class="issue">
+          <div class="flex" style="justify-content: space-between">
+            <h3>#${is.number} — <a href="${is.html_url}" target="_blank" rel="noreferrer">${is.title}</a></h3>
+            <span class="pill">${is.state.toUpperCase()}</span>
+          </div>
+          <div class="muted small">By <a href="${is.user.html_url}" target="_blank" rel="noreferrer">@${is.user.login}</a> • ${asTime(is.created_at)}</div>
+          ${is.labels?.length ? `<div class="chips" style="margin-top:6px">${is.labels.map(l => `<span class="chip">${l.name}</span>`).join('')}</div>` : ''}
+        </div>
+      `).join('') || '<div class="muted">No open issues.</div>';
+    }catch(e){
+      issuesEl.innerHTML = `<div class="error">Could not load issues: ${e.message}</div>`;
+    }
+
+    // Commits
+    try{
+      const commits = await get(`https://api.github.com/repos/${full}/commits?per_page=20`);
+      commitsEl.innerHTML = commits.map(c => `
+        <div class="commit">
+          <div class="flex" style="justify-content: space-between">
+            <h3><a href="${c.html_url}" target="_blank" rel="noreferrer">${c.sha.slice(0,7)}</a> — ${c.commit.message.split('\n')[0]}</h3>
+            <span class="pill">${c.commit.author?.name ?? c.author?.login ?? '—'}</span>
+          </div>
+          <div class="muted small">${asTime(c.commit.author?.date)}</div>
+        </div>
+      `).join('');
+    }catch(e){
+      commitsEl.innerHTML = `<div class="error">Could not load commits: ${e.message}</div>`;
+    }
+  }
+
+  // Search repos
+  async function doSearch(q){
+    const out = $('#searchResults');
+    skeleton(out, 5);
+    try{
+      const data = await get(`https://api.github.com/search/repositories?q=${encodeURIComponent(q)}&sort=stars&order=desc&per_page=20`);
+      out.innerHTML = data.items.map(r => `
+        <div class="repo">
+          <div class="flex" style="justify-content: space-between">
+            <h3><a href="${r.html_url}" target="_blank" rel="noreferrer">${r.full_name}</a></h3>
+            <span class="pill">★ ${k(r.stargazers_count)}</span>
+          </div>
+          <div class="muted">${r.description ?? ''}</div>
+          <div class="flex" style="margin-top:6px">
+            ${r.language ? `<span class="chip">${r.language}</span>`:''}
+            <span class="chip">Forks ${k(r.forks_count)}</span>
+            <span class="chip">Issues ${k(r.open_issues_count)}</span>
+            <span class="chip">Updated ${asTime(r.updated_at)}</span>
+          </div>
+        </div>
+      `).join('');
+    }catch(e){
+      out.innerHTML = `<div class="error">Search failed: ${e.message}</div>`;
+    }
+  }
+
+  // Rate limit on load
+  async function refreshRateLimit(){
+    try{
+      const r = await get('https://api.github.com/rate_limit');
+      const { remaining, limit, reset } = r.resources.core;
+      $('#rl').textContent = `Rate Limit: ${remaining}/${limit} • resets ${new Date(reset*1000).toLocaleTimeString()}`;
+    }catch{ /* ignore */ }
+  }
+
+  // Wire up controls
+  $('#loadProfile').addEventListener('click', () => loadProfile($('#username').value.trim()));
+  $('#username').addEventListener('keydown', e => { if(e.key === 'Enter') loadProfile($('#username').value.trim()) });
+  $('#loadRepo').addEventListener('click', () => loadRepo($('#repoFull').value.trim()));
+  $('#repoFull').addEventListener('keydown', e => { if(e.key === 'Enter') loadRepo($('#repoFull').value.trim()) });
+  $('#doSearch').addEventListener('click', () => doSearch($('#q').value.trim()));
+  $('#q').addEventListener('keydown', e => { if(e.key === 'Enter') doSearch($('#q').value.trim()) });
+
+  $('#send').addEventListener('click', async () => {
+    const ep = $('#endpoint').value.trim();
+    if(!/^https:\/\/api\.github\.com\//.test(ep)){
+      alert('Please enter a URL that starts with https://api.github.com/'); return;
+    }
+    $('#console').textContent = 'Loading…';
+    try{
+      const json = await get(ep);
+      $('#console').textContent = JSON.stringify(json, null, 2);
+    }catch(e){
+      $('#console').textContent = 'Error: ' + e.message;
+    }
+  });
+
+  // Restore last values
+  const rememberedUser = localStorage.getItem('gh:username') || 'octocat';
+  const rememberedRepo = localStorage.getItem('gh:repo') || 'octocat/Hello-World';
+  $('#username').value = rememberedUser;
+  $('#repoFull').value = rememberedRepo;
+  refreshRateLimit();
+  loadProfile(rememberedUser);
+  loadRepo(rememberedRepo);
+</script>
+</body>
+</html>
